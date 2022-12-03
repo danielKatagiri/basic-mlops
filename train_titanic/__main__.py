@@ -1,7 +1,9 @@
-from typing import List
+import pickle
+from typing import List, Union
 
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from .logging import LOGGER
@@ -68,6 +70,30 @@ def train_model(
     return model
 
 
+def save_artifact(
+    artifact: Union[pd.DataFrame, GradientBoostingClassifier], filename: str
+):
+    """
+    Saves the artifact to local file system
+    Parameters:
+        artifact: The artifact to be saved
+        filename: The name of the file
+    """
+    try:
+        LOGGER.info(f"Saving artifact {filename}.")
+        if isinstance(artifact, pd.DataFrame):
+            artifact.to_parquet(f"./artifacts/{filename}.parquet")
+        elif isinstance(artifact, GradientBoostingClassifier):
+            with open(f"./artifacts/{filename}.pkl", "wb") as file:
+                pickle.dump(artifact, file)
+        else:
+            raise TypeError(f"The type {type(artifact)} is not supported.")
+
+        LOGGER.info(f"Artifact {filename} successfully saved.")
+    except Exception as err:
+        LOGGER.exception(err)
+
+
 def main():
     """Main function to train titanic model"""
     features = ["Pclass", "Sex", "Age", "Fare"]
@@ -75,8 +101,12 @@ def main():
 
     df = download_data()
     preprocessed_df = preprocess_data(df=df, features=features, target=target)
-    model = train_model(df=preprocessed_df, features=features, target=target)
-    print(model)
+    train_df, test_df = train_test_split(preprocessed_df, test_size=10)
+    model = train_model(df=train_df, features=features, target=target)
+
+    save_artifact(train_df, "train_df")
+    save_artifact(test_df, "test_df")
+    save_artifact(model, "titanic_classifier")
 
 
 if __name__ == "__main__":
