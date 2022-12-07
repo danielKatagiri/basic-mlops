@@ -1,5 +1,5 @@
 import pickle
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
@@ -7,7 +7,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from .logging import LOGGER
+from titanic.logging import LOGGER
 
 
 def download_data() -> pd.DataFrame:
@@ -23,9 +23,11 @@ def download_data() -> pd.DataFrame:
     return df
 
 
-def preprocess_data(df: pd.DataFrame, features: List[str], target: str) -> pd.DataFrame:
+def preprocess_data(
+    df: pd.DataFrame, features: List[str], target: str
+) -> Tuple[StandardScaler, pd.DataFrame]:
     """
-    Preprocess the training data by selecting columns and normalizing values
+    Preprocess the training data by selecting columns and scaling values
     Parameters:
         df (pd.DataFrame): Raw dataset
         features (List[str]): Columns used as features
@@ -37,16 +39,19 @@ def preprocess_data(df: pd.DataFrame, features: List[str], target: str) -> pd.Da
     LOGGER.info("Starting dataset preprocessing.")
 
     scaler = StandardScaler()
+    scaler.fit(df[["Age", "Fare"]])
+
+    transformed_features = scaler.transform(df[["Age", "Fare"]])
 
     preprocessed_df = df.loc[:, features + [target]].assign(
-        Sex=lambda df_: df_["Sex"].map({"male": 0, "female": 1}),
-        Age=lambda df_: scaler.fit_transform(df_[["Age"]]),
-        Fare=lambda df_: scaler.fit_transform(df_[["Fare"]]),
+        Sex=lambda df_: df_["Sex"].map({"male": 0, "female": 1})
     )
+
+    preprocessed_df[["Age", "Fare"]] = transformed_features
 
     LOGGER.info("Dataset preprocessing finished.")
 
-    return preprocessed_df
+    return scaler, preprocessed_df
 
 
 def train_model(
@@ -127,7 +132,7 @@ def main():
     target = "Survived"
 
     df = download_data()
-    preprocessed_df = preprocess_data(df=df, features=features, target=target)
+    scaler, preprocessed_df = preprocess_data(df=df, features=features, target=target)
     train_df, test_df = train_test_split(
         preprocessed_df, test_size=10, random_state=123
     )
@@ -137,7 +142,7 @@ def main():
     save_artifact(train_df, "train_df")
     save_artifact(test_df, "test_df")
     save_artifact(model, "titanic_classifier")
-    save_artifact(model, "titanic_features_scaler")
+    save_artifact(scaler, "titanic_features_scaler")
 
 
 if __name__ == "__main__":
