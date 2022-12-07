@@ -3,6 +3,7 @@ from typing import List, Union
 
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -71,7 +72,8 @@ def train_model(
 
 
 def save_artifact(
-    artifact: Union[pd.DataFrame, GradientBoostingClassifier], filename: str
+    artifact: Union[pd.DataFrame, GradientBoostingClassifier, StandardScaler],
+    filename: str,
 ):
     """
     Saves the artifact to local file system
@@ -83,7 +85,9 @@ def save_artifact(
         LOGGER.info(f"Saving artifact {filename}.")
         if isinstance(artifact, pd.DataFrame):
             artifact.to_parquet(f"./artifacts/{filename}.parquet")
-        elif isinstance(artifact, GradientBoostingClassifier):
+        elif isinstance(artifact, GradientBoostingClassifier) or isinstance(
+            artifact, StandardScaler
+        ):
             with open(f"./artifacts/{filename}.pkl", "wb") as file:
                 pickle.dump(artifact, file)
         else:
@@ -94,6 +98,29 @@ def save_artifact(
         LOGGER.exception(err)
 
 
+def evaluate_model(
+    model: GradientBoostingClassifier,
+    test_df: pd.DataFrame,
+    features: List[str],
+    target: str,
+):
+    """
+    Evaluates the model against a test dataset and prints the metrics
+    Parameters:
+        model (GradientBoostingClassifier): Trained classifier model
+        test_df (pd.DataFrame): Test dataset
+        features (List[str]): Columns used as features
+        target (str): Target column
+    """
+    LOGGER.info("Starting model evaluation.")
+
+    predictions = model.predict(test_df[features])
+
+    f1 = f1_score(test_df[target], predictions)
+
+    LOGGER.info(f"The model f1 score is: {f1}.")
+
+
 def main():
     """Main function to train titanic model"""
     features = ["Pclass", "Sex", "Age", "Fare"]
@@ -101,12 +128,16 @@ def main():
 
     df = download_data()
     preprocessed_df = preprocess_data(df=df, features=features, target=target)
-    train_df, test_df = train_test_split(preprocessed_df, test_size=10)
+    train_df, test_df = train_test_split(
+        preprocessed_df, test_size=10, random_state=123
+    )
     model = train_model(df=train_df, features=features, target=target)
+    evaluate_model(model=model, test_df=test_df, features=features, target=target)
 
     save_artifact(train_df, "train_df")
     save_artifact(test_df, "test_df")
     save_artifact(model, "titanic_classifier")
+    save_artifact(model, "titanic_features_scaler")
 
 
 if __name__ == "__main__":
