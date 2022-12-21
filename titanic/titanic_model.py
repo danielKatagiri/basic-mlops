@@ -6,6 +6,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
 
 from .logging import LOGGER
+from .settings import ARTIFACTS_HOME
 
 
 class TitanicModel:
@@ -28,7 +29,7 @@ class TitanicModel:
         """
         LOGGER.info(f"Retrieving artifact: {filename}.")
 
-        with open(f"./artifacts/{filename}.pkl", "rb") as file:
+        with open(f"{ARTIFACTS_HOME}/{filename}.pkl", "rb") as file:
             artifact = pickle.load(file)
 
         LOGGER.info(f"Artifact {filename} successfully loaded.")
