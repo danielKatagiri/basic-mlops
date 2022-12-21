@@ -134,3 +134,4 @@ dmypy.json
 # Binary files
 *.parquet
 *.pkl
+*.csv

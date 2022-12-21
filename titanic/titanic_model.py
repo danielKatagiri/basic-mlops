@@ -10,11 +10,11 @@ from .logging import LOGGER
 
 class TitanicModel:
     def __init__(self):
-        self.model = self._load_model(filename="titanic_classifier")
-        self.scaler = self._load_model(filename="titanic_features_scaler")
+        self.model = self._load_artifact(filename="titanic_classifier")
+        self.scaler = self._load_artifact(filename="titanic_features_scaler")
 
     @staticmethod
-    def _load_model(
+    def _load_artifact(
         filename: str,
     ) -> Union[pd.DataFrame, GradientBoostingClassifier, StandardScaler]:
         """
@@ -79,7 +79,7 @@ class TitanicModel:
 
         return scaled_age, scaled_fare
 
-    def infer(
+    def predict(
         self, pclass: int, sex: str, age: Union[float, int], fare: Union[float, int]
     ) -> bool:
         """
