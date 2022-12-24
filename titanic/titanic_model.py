@@ -19,7 +19,7 @@ class TitanicModel:
         filename: str,
     ) -> Union[pd.DataFrame, GradientBoostingClassifier, StandardScaler]:
         """
-        Loads model from the 'artifacts' folder.
+        Loads model from the 'ARTIFACTS_HOME' folder.
         In a production environment, this might not be the best approach. Your company should have a model registry that
         you can use to save the models you have trained.
 
@@ -29,12 +29,18 @@ class TitanicModel:
         """
         LOGGER.info(f"Retrieving artifact: {filename}.")
 
-        with open(f"{ARTIFACTS_HOME}/{filename}.pkl", "rb") as file:
-            artifact = pickle.load(file)
+        try:
+            with open(f"{ARTIFACTS_HOME}/{filename}.pkl", "rb") as file:
+                artifact = pickle.load(file)
 
-        LOGGER.info(f"Artifact {filename} successfully loaded.")
+            LOGGER.info(f"Artifact {filename} successfully loaded.")
 
-        return artifact
+            return artifact
+        except Exception as err:
+            raise Exception(
+                f"The model could not be loaded from the `ARTIFACTS_HOME` folder. Make sure the artifact "
+                f"{filename} is available."
+            ) from err
 
     @staticmethod
     def encode_sex(sex: str) -> int:
