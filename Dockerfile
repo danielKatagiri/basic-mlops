@@ -12,6 +12,6 @@ RUN pip3 install --upgrade pip
 RUN pip install . && rm -rf /package
 
 WORKDIR /app
-COPY . .
+COPY app.py .
 
 CMD ["python", "app.py"]
