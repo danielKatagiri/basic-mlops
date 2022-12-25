@@ -7,7 +7,7 @@ with open("requirements.txt") as f:
     install_requires = f.read().strip().split("\n")
 
 setup(
-    name="ocr-medical-prescriptions-sync",
+    name="titanic",
     version="0.1",
     url="https://github.com/danielKatagiri/basic-mlops",
     description="Package to create a predictor for the Titanic dataset",
